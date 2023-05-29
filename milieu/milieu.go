@@ -1,10 +1,11 @@
 // Package corelib provides a number of support functions that I utilize in a number of my regular applications
 // It's generally not designed for public consumption, but it's out there in case it's desired
 // This is opinionated towards Gin as I use it for most of my web-based systems.
-package corelib
+package milieu
 
 import (
 	"context"
+	"github.com/getsentry/sentry-go"
 	"github.com/go-redis/redis/v8"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -12,12 +13,13 @@ import (
 )
 
 type Milieu struct {
-	Pgx         *pgxpool.Pool
-	Redis       *redis.Client
+	pgx         *pgxpool.Pool
+	redis       *redis.Client
 	transaction pgx.Tx
 	psqlconn    *pgxpool.Conn
 	logger      *logrus.Logger
 	logEntry    *logrus.Entry
+	sentry      bool
 }
 
 var bg = context.Background()
@@ -26,10 +28,13 @@ var bg = context.Background()
 // otherwise it will try to use a conn attached to the instance, failing that, it will go all the way and generate both
 // a dedicated sql conn, as required for the txn, and the txn itself
 func (c *Milieu) GetTransaction() (pgx.Tx, error) {
+	if c.pgx == nil {
+		return nil, ErrPSQLNotActive
+	}
 	var err error
 	if c.transaction == nil {
 		if c.psqlconn == nil {
-			if c.psqlconn, err = c.Pgx.Acquire(bg); err != nil {
+			if c.psqlconn, err = c.pgx.Acquire(bg); err != nil {
 				return c.transaction, err
 			}
 		}
@@ -54,10 +59,11 @@ func (c *Milieu) Cleanup() {
 // This also wipes the logger clean, so any fields will need to be created/added once more.
 func (c *Milieu) Clone() Milieu {
 	return Milieu{
-		Pgx:      c.Pgx,
-		Redis:    c.Redis,
+		pgx:      c.pgx,
+		redis:    c.redis,
 		logger:   c.logger,
 		logEntry: logrus.NewEntry(c.logger),
+		sentry:   c.sentry,
 	}
 }
 
@@ -93,24 +99,45 @@ func (c *Milieu) Panic(msg string) {
 	c.logEntry.Panic(msg)
 }
 
+// CaptureException wraps the default sentry.CaptureException call, allowing us to check to see if Milieu has been
+// configured to use sentry yet, if not, we handle this gracefully
+func (c *Milieu) CaptureException(err error) {
+	if c.sentry == true {
+		sentry.CaptureException(err)
+	}
+}
+
 // NewMilieu issues a standard Milieu object
 // psqlURI is a standard PSQL URI string in the format postgres://user:pass@host:port/db
 // redisURI is a standard URI string in the format: redis://user:pass@host:port/db
-func NewMilieu(psqlURI string, redisURI string) (Milieu, error) {
-	pgpool, err := pgxpool.Connect(bg, psqlURI)
-	if err != nil {
-		return Milieu{}, err
-	}
-	opts, err := redis.ParseURL(redisURI)
-	if err != nil {
-		return Milieu{}, err
-	}
-	rdb := redis.NewClient(opts)
+func NewMilieu(psqlURI *string, redisURI *string, sentryDSN *string) (*Milieu, error) {
 	internalLogger := logrus.New()
-	return Milieu{
-		Pgx:      pgpool,
-		Redis:    rdb,
+	intMilieu := &Milieu{
+		pgx:      nil,
+		redis:    nil,
 		logger:   internalLogger,
 		logEntry: logrus.NewEntry(internalLogger),
-	}, nil
+	}
+	if psqlURI != nil {
+		pgpool, err := pgxpool.Connect(bg, *psqlURI)
+		if err != nil {
+			return nil, err
+		}
+		intMilieu.pgx = pgpool
+	}
+	if redisURI != nil {
+		opts, err := redis.ParseURL(*redisURI)
+		if err != nil {
+			return nil, err
+		}
+		intMilieu.redis = redis.NewClient(opts)
+	}
+	if sentryDSN != nil {
+		if err := sentry.Init(sentry.ClientOptions{
+			Dsn: *sentryDSN,
+		}); err != nil {
+			return nil, err
+		}
+	}
+	return intMilieu, nil
 }
