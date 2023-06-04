@@ -107,6 +107,10 @@ func (c *Milieu) CaptureException(err error) {
 	}
 }
 
+func (c *Milieu) GetRawPGXPool() *pgxpool.Pool {
+	return c.pgx
+}
+
 // NewMilieu issues a standard Milieu object
 // psqlURI is a standard PSQL URI string in the format postgres://user:pass@host:port/db
 // redisURI is a standard URI string in the format: redis://user:pass@host:port/db
