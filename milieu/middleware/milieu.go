@@ -6,7 +6,7 @@ import (
 )
 
 // SetupMilieu provides an easy interface for injecting Milieu into the core handler functions of gin
-func SetupMilieu(milieu milieu.Milieu) gin.HandlerFunc {
+func SetupMilieu(milieu *milieu.Milieu) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		m := milieu.Clone()
 		c.Set("MILIEU", m)
