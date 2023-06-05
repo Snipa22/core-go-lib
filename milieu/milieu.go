@@ -104,6 +104,8 @@ func (c *Milieu) Panic(msg string) {
 func (c *Milieu) CaptureException(err error) {
 	if c.sentry == true {
 		sentry.CaptureException(err)
+	} else {
+		c.Error(err.Error())
 	}
 }
 
@@ -121,27 +123,30 @@ func NewMilieu(psqlURI *string, redisURI *string, sentryDSN *string) (*Milieu, e
 		redis:    nil,
 		logger:   internalLogger,
 		logEntry: logrus.NewEntry(internalLogger),
+		sentry:   false,
+	}
+	if sentryDSN != nil {
+		if err := sentry.Init(sentry.ClientOptions{
+			Dsn: *sentryDSN,
+		}); err != nil {
+			return intMilieu, err
+		} else {
+			intMilieu.sentry = true
+		}
 	}
 	if psqlURI != nil {
 		pgpool, err := pgxpool.Connect(bg, *psqlURI)
 		if err != nil {
-			return nil, err
+			return intMilieu, err
 		}
 		intMilieu.pgx = pgpool
 	}
 	if redisURI != nil {
 		opts, err := redis.ParseURL(*redisURI)
 		if err != nil {
-			return nil, err
+			return intMilieu, err
 		}
 		intMilieu.redis = redis.NewClient(opts)
-	}
-	if sentryDSN != nil {
-		if err := sentry.Init(sentry.ClientOptions{
-			Dsn: *sentryDSN,
-		}); err != nil {
-			return nil, err
-		}
 	}
 	return intMilieu, nil
 }
