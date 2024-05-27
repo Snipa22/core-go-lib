@@ -1,4 +1,4 @@
-// Package corelib provides a number of support functions that I utilize in a number of my regular applications
+// Package milieu provides a number of support functions that I utilize in a number of my regular applications
 // It's generally not designed for public consumption, but it's out there in case it's desired
 // This is opinionated towards Gin as I use it for most of my web-based systems.
 package milieu
@@ -16,7 +16,7 @@ type Milieu struct {
 	pgx         *pgxpool.Pool
 	redis       *redis.Client
 	transaction pgx.Tx
-	psqlconn    *pgxpool.Conn
+	psqlConn    *pgxpool.Conn
 	logger      *logrus.Logger
 	logEntry    *logrus.Entry
 	sentry      bool
@@ -25,20 +25,20 @@ type Milieu struct {
 var bg = context.Background()
 
 // GetTransaction will return the current transaction if one is generated in this particular Milieu instance
-// otherwise it will try to use a conn attached to the instance, failing that, it will go all the way and generate both
-// a dedicated sql conn, as required for the txn, and the txn itself
+// otherwise it will try to use a psqlConn attached to the instance, failing that, it will go all the way and generate
+// both a dedicated sql conn, as required for the txn, and the txn itself
 func (c *Milieu) GetTransaction() (pgx.Tx, error) {
 	if c.pgx == nil {
 		return nil, ErrPSQLNotActive
 	}
 	var err error
 	if c.transaction == nil {
-		if c.psqlconn == nil {
-			if c.psqlconn, err = c.pgx.Acquire(bg); err != nil {
+		if c.psqlConn == nil {
+			if c.psqlConn, err = c.pgx.Acquire(bg); err != nil {
 				return c.transaction, err
 			}
 		}
-		if c.transaction, err = c.psqlconn.Begin(bg); err != nil {
+		if c.transaction, err = c.psqlConn.Begin(bg); err != nil {
 			return c.transaction, err
 		}
 	}
@@ -50,8 +50,8 @@ func (c *Milieu) Cleanup() {
 	if c.transaction != nil {
 		_ = c.transaction.Rollback(bg)
 	}
-	if c.psqlconn != nil {
-		c.psqlconn.Release()
+	if c.psqlConn != nil {
+		c.psqlConn.Release()
 	}
 }
 
