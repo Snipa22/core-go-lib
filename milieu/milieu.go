@@ -113,6 +113,8 @@ func (c *Milieu) GetRawPGXPool() *pgxpool.Pool {
 	return c.pgx
 }
 
+func (c *Milieu) GetRedis() *redis.Client { return c.redis }
+
 // NewMilieu issues a standard Milieu object
 // psqlURI is a standard PSQL URI string in the format postgres://user:pass@host:port/db
 // redisURI is a standard URI string in the format: redis://user:pass@host:port/db
