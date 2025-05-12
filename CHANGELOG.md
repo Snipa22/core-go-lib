@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/Snipa22/core-go-lib/compare/v1.0.0...v1.1.0) (2025-05-12)
+
+
+### Features
+
+* **milieu:** add GetRedis ([651aa71](https://github.com/Snipa22/core-go-lib/commit/651aa71c93b324a848f998f94a4207ded45ca86b))
+
 ## [1.0.0](https://github.com/Snipa22/core-go-lib/compare/v0.1.0...v1.0.0) (2024-05-27)
 
 
