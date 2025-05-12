@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/Snipa22/core-go-lib/compare/v1.1.0...v1.1.1) (2025-05-12)
+
+
+### Bug Fixes
+
+* **milieu:** upgrade redis to V9 ([5d1bd61](https://github.com/Snipa22/core-go-lib/commit/5d1bd6199f17b7b3cae6d1c57bfe4b8dffdef3d3))
+
 ## [1.1.0](https://github.com/Snipa22/core-go-lib/compare/v1.0.0...v1.1.0) (2025-05-12)
 
 
