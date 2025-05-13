@@ -49,9 +49,18 @@ func (c *Milieu) GetTransaction() (pgx.Tx, error) {
 func (c *Milieu) Cleanup() {
 	if c.transaction != nil {
 		_ = c.transaction.Rollback(bg)
+		c.transaction = nil
 	}
 	if c.psqlConn != nil {
 		c.psqlConn.Release()
+	}
+}
+
+// CleanupTxn cleans up and removes the TXN from the milieu state
+func (c *Milieu) CleanupTxn() {
+	if c.transaction != nil {
+		_ = c.transaction.Rollback(bg)
+		c.transaction = nil
 	}
 }
 
