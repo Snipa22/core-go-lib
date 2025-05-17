@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/Snipa22/core-go-lib/compare/v1.1.2...v1.2.0) (2025-05-17)
+
+
+### Features
+
+* **helpers:** add reusable helpers ([9cd8b31](https://github.com/Snipa22/core-go-lib/commit/9cd8b3165dd541c08baab6bb81f988003e38b816))
+
 ## [1.1.2](https://github.com/Snipa22/core-go-lib/compare/v1.1.1...v1.1.2) (2025-05-13)
 
 
